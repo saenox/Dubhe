@@ -35,7 +35,7 @@ export interface PayloadForBodyEvent {
   cell: DataItem['cells'][number];
 }
 
-export interface Emits {
+interface Emits {
   (e: 'activateHeadCell', payload: PayloadForHeadEvent): void;
   (e: 'deactivateHeadCell', payload: PayloadForHeadEvent): void;
 
@@ -46,6 +46,7 @@ export interface Emits {
   (e: 'drop', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
 
   (e: 'cross', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
+  (e: 'crossEnd'): void;
 }
 
 export interface ActiveCell {

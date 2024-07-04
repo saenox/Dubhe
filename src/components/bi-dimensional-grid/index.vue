@@ -30,6 +30,7 @@ interface Emits {
   (e: 'drop', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
 
   (e: 'cross', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
+  (e: 'crossEnd'): void;
 }
 
 const props = defineProps<Props>();

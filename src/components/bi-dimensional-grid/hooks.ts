@@ -986,6 +986,7 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     }
 
     setTimeout(() => {
+      emits('crossEnd');
       onCrossing.value = false;
       crossingSet.clear();
     }, 20);
