@@ -12,6 +12,8 @@ interface Props {
   isShowOverlay?: (i: number, j: number, c: CellTypes) => boolean;
   isCellSilent?: (i: number, j: number, c: CellTypes) => boolean;
   isCellSticky?: (i: number, j: number, c: CellTypes) => boolean;
+  isCellDraggable?: (i: number, j: number, c: CellTypes) => boolean;
+  isCellDroppable?: (i: number, j: number, c: CellTypes) => boolean;
 }
 
 export interface Emits {
@@ -20,6 +22,9 @@ export interface Emits {
 
   (e: 'activateBodyCell', payload: PayloadForBodyEvent): void;
   (e: 'deactivateBodyCell', payload: PayloadForBodyEvent): void;
+
+  (e: 'dragStart', payload: PayloadForBodyEvent): void;
+  (e: 'drop', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
 }
 
 const props = defineProps<Props>();
@@ -38,6 +43,8 @@ const {
   activeCell,
   activeItem,
   isCellSticky,
+  isCellDraggable,
+  isCellDroppable,
   computeCellWidth,
   clearActiveState,
   onResize,
@@ -46,6 +53,9 @@ const {
   onClickOutside,
   onScroll,
   onKeyDown,
+  onDragStart,
+  onDragOver,
+  onDrop,
 } = useBiDimensionalGrid(props, emits);
 
 onBeforeMount(() => {
@@ -116,7 +126,14 @@ watch(
               </div>
             </div>
           </div>
-          <div v-if="data.length" class="bi-dimensional-grid__body" @click="onClickBody">
+          <div
+              v-if="data.length"
+              class="bi-dimensional-grid__body"
+              @click="onClickBody"
+              @dragstart="onDragStart"
+              @dragover="onDragOver"
+              @drop="onDrop"
+          >
             <template v-for="(row, i) in data" :key="row.id">
               <div
                 v-for="(col, j) in columns"
@@ -129,6 +146,7 @@ watch(
                   'bi-dimensional-grid__cell--sticky': isCellSticky(i, j, CellTypes.B),
                   'bi-dimensional-grid__body-cell--active': activeCell.c === CellTypes.B && activeCell.i === i && activeCell.j === j,
                 }"
+                :draggable="isCellDraggable(i, j, CellTypes.B)"
               >
                 <slot name="body-cell" v-bind="{ i, j, row, col, cell: row?.cells?.[j], activeItem, clearActiveState }">
                   {{ `${ i * columns.length + j }` }}

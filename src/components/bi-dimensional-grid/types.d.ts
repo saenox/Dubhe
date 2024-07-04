@@ -1,3 +1,4 @@
+import type { Ref } from 'vue';
 import type { CellTypes } from './utils';
 
 export interface Item {
@@ -16,6 +17,8 @@ interface Props {
   isShowOverlay?: (i: number, j: number, c: CellTypes) => boolean;
   isCellSilent?: (i: number, j: number, c: CellTypes) => boolean;
   isCellSticky?: (i: number, j: number, c: CellTypes) => boolean;
+  isCellDraggable?: (i: number, j: number, c: CellTypes) => boolean;
+  isCellDroppable?: (i: number, j: number, c: CellTypes) => boolean;
 }
 
 export interface PayloadForHeadEvent {
@@ -37,6 +40,9 @@ export interface Emits {
 
   (e: 'activateBodyCell', payload: PayloadForBodyEvent): void;
   (e: 'deactivateBodyCell', payload: PayloadForBodyEvent): void;
+
+  (e: 'dragStart', payload: PayloadForBodyEvent): void;
+  (e: 'drop', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
 }
 
 export interface ActiveCell {

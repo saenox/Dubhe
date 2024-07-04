@@ -85,6 +85,22 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     return columns.value.length === 0 || j % columns.value.length === 0;
   }
 
+  function isCellDraggable(i: number, j: number, c: CellTypes) {
+    if (isFunction(props.isCellDraggable)) {
+      return props.isCellDraggable(i, j, c);
+    }
+
+    return i % 2 === 0;
+  }
+
+  function isCellDroppable(i: number, j: number, c: CellTypes) {
+    if (isFunction(props.isCellDroppable)) {
+      return props.isCellDroppable(i, j, c);
+    }
+
+    return true;
+  }
+
   function getSelector(i: number, j: number, c: CellTypes) {
     return `div[data-i="${i}"][data-j="${j}"][data-c="${c}"]`;
   }
@@ -727,11 +743,29 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     avgCellWidth.value = width;
   }
 
+  function checkDragDrop(evt: Event) {
+    if (!evt) {
+      return null;
+    }
+
+    const { i, j, c } = getCoordinateFromEvent(evt);
+
+    if (isNilCoordinate({ i, j })) {
+      return null;
+    }
+
+    if (!isCellDraggable(i as number, j as number, c as CellTypes)) {
+      return null;
+    }
+
+    return { i: i as number, j: j as number, c: c as CellTypes };
+  }
+
   function onClickHeader(evt: MouseEvent) {
     const { i, j } = getCoordinateFromEvent(evt);
 
     if (isNilCoordinate({ i, j })) {
-      console.log(`click on invalid header cell: ${(evt?.target as HTMLElement)?.dataset}`);
+      console.log('click on invalid header cell: ', evt?.target);
       return;
     }
 
@@ -742,7 +776,7 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     const { i, j } = getCoordinateFromEvent(evt);
 
     if (isNilCoordinate({ i, j })) {
-      console.log(`click on invalid body cell: ${(evt?.target as HTMLElement)?.dataset}`);
+      console.log('click on invalid body cell: ', evt?.target);
       return;
     }
 
@@ -828,6 +862,52 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     handleDirectionEvent(evt);
   }
 
+  function onDragStart(evt: DragEvent) {
+    const dataset = checkDragDrop(evt);
+
+    if (!dataset) {
+      return false;
+    }
+
+    evt.dataTransfer?.setData(
+      'text/plain',
+      JSON.stringify({
+        target: {
+          dataset,
+        },
+      }),
+    );
+
+    emits('dragStart', getBodyEventPayload(dataset.i, dataset.j));
+  }
+
+  function onDragOver(evt: DragEvent) {
+    if (!checkDragDrop(evt)) {
+      return false;
+    }
+
+    evt.preventDefault();
+    return true;
+  }
+
+  function onDrop(evt: DragEvent) {
+    const dataset = checkDragDrop(evt);
+
+    if (!dataset) {
+      return false;
+    }
+
+    const derivedDataset = getCoordinateFromEvent(
+      JSON.parse(evt.dataTransfer?.getData('text/plain') || '{}') as unknown as Event,
+    );
+
+    evt.preventDefault();
+    emits('drop', {
+      from: getBodyEventPayload(derivedDataset.i as number, derivedDataset.j as number),
+      to: getBodyEventPayload(dataset.i as number, dataset.j as number),
+    });
+  }
+
   return {
     MinWidth,
     containerRef,
@@ -841,7 +921,9 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     activeCell,
     activeItem,
     isCellSticky,
-    computeCellWidth: computeCellWidth,
+    isCellDraggable,
+    isCellDroppable,
+    computeCellWidth,
     clearActiveState,
     onResize: debounce(computeCellWidth, 200),
     onClickHeader,
@@ -849,6 +931,9 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     onClickOutside,
     onScroll: debounce(onScroll, 100),
     onKeyDown,
+    onDragStart,
+    onDragOver,
+    onDrop,
   };
 };
 
