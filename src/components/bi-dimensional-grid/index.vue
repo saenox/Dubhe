@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { PlusOutlined } from '@ant-design/icons-vue';
 import { Empty } from 'ant-design-vue';
+import { isNil } from 'lodash';
 import { nextTick, onBeforeMount, onBeforeUnmount, onMounted, watch } from 'vue';
 import useBiDimensionalGrid from './hooks';
 import type { DataItem, Item, PayloadForBodyEvent, PayloadForHeadEvent } from './types';
@@ -9,6 +11,7 @@ import { CellTypes } from './utils';
 interface Props {
   columns: Item[];
   data: DataItem[];
+  isAllowCrossing?: boolean;
   isShowOverlay?: (i: number, j: number, c: CellTypes) => boolean;
   isCellSilent?: (i: number, j: number, c: CellTypes) => boolean;
   isCellSticky?: (i: number, j: number, c: CellTypes) => boolean;
@@ -16,7 +19,7 @@ interface Props {
   isCellDroppable?: (i: number, j: number, c: CellTypes) => boolean;
 }
 
-export interface Emits {
+interface Emits {
   (e: 'activateHeadCell', payload: PayloadForHeadEvent): void;
   (e: 'deactivateHeadCell', payload: PayloadForHeadEvent): void;
 
@@ -25,6 +28,8 @@ export interface Emits {
 
   (e: 'dragStart', payload: PayloadForBodyEvent): void;
   (e: 'drop', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
+
+  (e: 'cross', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
 }
 
 const props = defineProps<Props>();
@@ -40,11 +45,11 @@ const {
   overlayArrowRef,
   columns,
   data,
+  isAllowCrossing,
   activeCell,
   activeItem,
   isCellSticky,
   isCellDraggable,
-  isCellDroppable,
   computeCellWidth,
   clearActiveState,
   onResize,
@@ -56,6 +61,9 @@ const {
   onDragStart,
   onDragOver,
   onDrop,
+  onMousedown,
+  onMouseMove,
+  onMouseup,
 } = useBiDimensionalGrid(props, emits);
 
 onBeforeMount(() => {
@@ -127,12 +135,14 @@ watch(
             </div>
           </div>
           <div
-              v-if="data.length"
-              class="bi-dimensional-grid__body"
-              @click="onClickBody"
-              @dragstart="onDragStart"
-              @dragover="onDragOver"
-              @drop="onDrop"
+            v-if="data.length"
+            class="bi-dimensional-grid__body"
+            @click="onClickBody"
+            @dragstart="onDragStart"
+            @dragover="onDragOver"
+            @drop="onDrop"
+            @mousemove="onMouseMove"
+            @mouseup="onMouseup"
           >
             <template v-for="(row, i) in data" :key="row.id">
               <div
@@ -145,12 +155,22 @@ watch(
                 :class="{
                   'bi-dimensional-grid__cell--sticky': isCellSticky(i, j, CellTypes.B),
                   'bi-dimensional-grid__body-cell--active': activeCell.c === CellTypes.B && activeCell.i === i && activeCell.j === j,
+                  'bi-dimensional-grid__crossing': isAllowCrossing && activeCell.j === j && !isNil(activeCell.k) && (activeCell.i as number) < i && i <= activeCell.k
                 }"
                 :draggable="isCellDraggable(i, j, CellTypes.B)"
               >
                 <slot name="body-cell" v-bind="{ i, j, row, col, cell: row?.cells?.[j], activeItem, clearActiveState }">
                   {{ `${ i * columns.length + j }` }}
                 </slot>
+                <div
+                  v-if="isAllowCrossing && activeCell.j === j && (isNil(activeCell.k) ? (activeCell.i === i) : (activeCell.k === i))"
+                  :data-i="i"
+                  :data-j="j"
+                  class="bi-dimensional-grid__cross-indicator"
+                  @mousedown="onMousedown"
+                  @click="evt => evt.stopPropagation()"
+                >
+                </div>
               </div>
             </template>
           </div>
@@ -163,7 +183,7 @@ watch(
       <slot name="footer"></slot>/
     </div>
   </div>
-  <div v-if="$slots.overlay" ref="overlayRef" class="bi-dimension-grid__overlay">
+  <div v-if="$slots.overlay" ref="overlayRef" class="bi-dimensional-grid__overlay">
     <div ref="overlayArrowRef" class="bi-dimensional-grid__overlay-arrow"></div>
     <div class="bi-dimensional-grid__overlay-body" >
       <slot
@@ -298,7 +318,7 @@ $overlay-max-height: 280px;
 
 .bi-dimensional-grid__body-cell {
   @include cell-ify($body-cell-bg);
-  cursor: pointer;
+  position: relative;
 }
 
 .bi-dimensional-grid__body-cell--active {
@@ -306,12 +326,26 @@ $overlay-max-height: 280px;
   box-shadow: 0 0 0 1px $active-cell-color inset;
 }
 
+.bi-dimensional-grid__cross-indicator {
+  position: absolute;
+  background: $active-cell-color;
+  width: 8px;
+  height: 8px;
+  bottom: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.bi-dimensional-grid__crossing {
+  background: rgba($active-cell-color, 0.1);
+}
+
 .bi-dimensional-grid--empty {
   @include sticky-left;
   margin-inline: 0;
 }
 
-.bi-dimension-grid__overlay {
+.bi-dimensional-grid__overlay {
   position: fixed;
   z-index: 8;
   top: 0;

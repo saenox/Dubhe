@@ -16,6 +16,10 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
 
   const overlayArrowRef = ref<HTMLDivElement | null>(null);
 
+  const onCrossing = ref(false);
+
+  const crossingSet = new Set<number>();
+
   const containerWidth = ref<number>();
 
   const avgCellWidth = ref(MinWidth);
@@ -25,6 +29,7 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
   const activeCell = ref<ActiveCell>({
     i: undefined,
     j: undefined,
+    k: undefined,
     c: undefined,
   });
 
@@ -33,6 +38,8 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
   });
 
   const data = computed(() => props.data || []);
+
+  const isAllowCrossing = computed(() => props.isAllowCrossing);
 
   const activeItem = computed(() => {
     if (isNilCoordinate(activeCell.value)) {
@@ -109,8 +116,11 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     activeCell.value = {
       i: undefined,
       j: undefined,
+      k: undefined,
       c: undefined,
     };
+
+    crossingSet.clear();
   }
 
   function isNilCoordinate(coordinate: { i?: number; j?: number }): boolean {
@@ -429,7 +439,10 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
   function activateHeadCell(i: number, j: number) {
     activeCell.value.i = i;
     activeCell.value.j = j;
+    activeCell.value.k = undefined;
     activeCell.value.c = CellTypes.H;
+
+    crossingSet.clear();
 
     emits('activateHeadCell', getHeadEventPayload(i, j));
 
@@ -447,6 +460,7 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
   function activateBodyCell(i: number, j: number) {
     activeCell.value.i = i;
     activeCell.value.j = j;
+    activeCell.value.k = undefined;
     activeCell.value.c = CellTypes.B;
 
     emits('activateBodyCell', getBodyEventPayload(i, j));
@@ -805,7 +819,8 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     const shouldIgnore =
       (!isNilCoordinate({ i, j }) && !isCellSilent(i as number, j as number, c as CellTypes)) ||
       c === CellTypes.H ||
-      overlayRef.value?.contains(evt.target as HTMLElement);
+      overlayRef.value?.contains(evt.target as HTMLElement) ||
+      unref(onCrossing);
 
     if (shouldIgnore) {
       return;
@@ -908,6 +923,74 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     });
   }
 
+  function onMousedown(evt: MouseEvent) {
+    if (!unref(isAllowCrossing)) {
+      return;
+    }
+
+    hideOverlay();
+
+    onCrossing.value = true;
+    activeCell.value.k = undefined;
+
+    evt.preventDefault();
+  }
+
+  function onMouseMove(evt: MouseEvent) {
+    if (!unref(onCrossing) || !unref(isAllowCrossing)) {
+      return;
+    }
+
+    const act = unref(activeCell);
+
+    const cur = getCoordinateFromEvent(evt);
+
+    const b =
+      isNilCoordinate(act) ||
+      isNilCoordinate(cur) ||
+      isCellSilent(cur.i as number, cur.j as number, CellTypes.B) ||
+      (act.i as number) >= (cur.i as number);
+
+    if (b) {
+      return;
+    }
+
+    activeCell.value.k = cur.i;
+
+    crossingSet.add(cur.i as number);
+
+    emits('cross', {
+      from: getBodyEventPayload(act.i as number, act.j as number),
+      to: getBodyEventPayload(cur.i as number, act.j as number),
+    });
+  }
+
+  function onMouseup(evt: MouseEvent) {
+    if (!unref(isAllowCrossing)) {
+      return;
+    }
+
+    evt.stopPropagation();
+
+    const act = unref(activeCell);
+
+    if (!isNilCoordinate(act) && !isNil(act.k) && crossingSet.size > 0) {
+      for (let i = act.i as number; i <= act.k; i += 1) {
+        if (!crossingSet.has(i)) {
+          emits('cross', {
+            from: getBodyEventPayload(act.i as number, act.j as number),
+            to: getBodyEventPayload(i, act.j as number),
+          });
+        }
+      }
+    }
+
+    setTimeout(() => {
+      onCrossing.value = false;
+      crossingSet.clear();
+    }, 20);
+  }
+
   return {
     MinWidth,
     containerRef,
@@ -918,6 +1001,7 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     overlayArrowRef,
     columns,
     data,
+    isAllowCrossing,
     activeCell,
     activeItem,
     isCellSticky,
@@ -934,6 +1018,9 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     onDragStart,
     onDragOver,
     onDrop,
+    onMousedown,
+    onMouseMove,
+    onMouseup,
   };
 };
 

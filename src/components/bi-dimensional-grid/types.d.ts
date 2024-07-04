@@ -14,6 +14,7 @@ export type DataItem = Record<string, unknown> &
 interface Props {
   columns: Item[];
   data: DataItem[];
+  isAllowCrossing?: boolean;
   isShowOverlay?: (i: number, j: number, c: CellTypes) => boolean;
   isCellSilent?: (i: number, j: number, c: CellTypes) => boolean;
   isCellSticky?: (i: number, j: number, c: CellTypes) => boolean;
@@ -43,10 +44,13 @@ export interface Emits {
 
   (e: 'dragStart', payload: PayloadForBodyEvent): void;
   (e: 'drop', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
+
+  (e: 'cross', payload: { from: PayloadForBodyEvent; to: PayloadForBodyEvent }): void;
 }
 
 export interface ActiveCell {
   i?: number;
   j?: number;
+  k?: number;
   c?: CellTypes;
 }

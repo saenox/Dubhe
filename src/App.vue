@@ -6,7 +6,7 @@ import BiDimensionalGrid from './components/bi-dimensional-grid/index.vue';
 
 const columns = ref(Array.from({ length: 10 }, (_, i) => ({ id: `${i}`, name: `c-${i}` })));
 const data = ref(
-  Array.from({ length: 200 }, (_, i) => ({
+  Array.from({ length: 20 }, (_, i) => ({
     id: `d-${i}`,
     name: `d-${i}`,
     cells: Array.from({ length: columns.value.length }, (_, j) => ({
@@ -24,7 +24,9 @@ const data = ref(
       :columns="columns"
       :data="data"
       :is-cell-silent="(i, j) => i < 1 || j < 1"
+      :is-cell-draggable="() => true"
       @drop="({ from, to }) => to.cell.name = from.cell.name"
+      @cross="({ from, to }) => to.cell.name = from.cell.name"
     >
       <template #scrollable-header>
         <div>scrollable-header</div>
