@@ -163,6 +163,17 @@ const useForm = (params: { needDefault: boolean }) => {
     formState.sectionType = '';
   }
 
+  function handleSectionTypeChange() {
+    // TODO:
+    return getSubjects().then(() => {});
+  }
+
+  function handleGradeChange() {}
+
+  function handleSubjectChange() {}
+
+  function handleApproverChange() {}
+
   return {
     sectionOptions,
     gradeOptions,

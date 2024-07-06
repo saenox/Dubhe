@@ -6,29 +6,15 @@ import { type Context, ContextKey } from '../../utils';
 
 type ContextFilter = Pick<
   Context,
-  | 'locationType'
-  | 'searchParams'
-  | 'sectionTypes'
-  | 'searchGradeOptions'
-  | 'subjectList'
-  | 'userListForSearch'
-  | 'handleSearchSectionChanged'
-  | 'handleSearch'
-  | 'handleBatchAdd'
+  'locationType' | 'sectionOptions' | 'gradeOptions' | 'subjectOptions' | 'approverOptions' | 'formState'
 >;
-
-const fieldNames: SelectProps['fieldNames'] = {
-  label: 'name',
-  value: 'id',
-};
 
 const {
   locationType,
-  searchParams,
-  sectionTypes,
-  searchGradeOptions,
-  subjectList,
-  userListForSearch,
+  sectionOptions,
+  gradeOptions,
+  subjectOptions,
+  approverOptions,
   handleSearchSectionChanged,
   handleSearch,
   handleBatchAdd,
@@ -53,7 +39,7 @@ const {
     <div class="approver-settings-header-left">
       <a-form
         ref="searchFormRef"
-        :model="searchParams"
+        :model="formState"
         name="approve-search-form"
         autocomplete="off"
         centered
@@ -61,35 +47,34 @@ const {
       >
         <a-form-item>
           <a-select
-            v-model:value="searchParams.sectionCode"
+            v-model:value="formState.sectionType"
             class="approver-settings-select-form-item"
-            :options="sectionTypes"
+            :options="sectionOptions"
             @change="handleSearchSectionChanged"
           />
         </a-form-item>
         <a-form-item>
           <a-select
-            v-model:value="searchParams.gradeCode"
+            v-model:value="formState.gradeId"
             class="approver-settings-select-form-item"
-            :options="searchGradeOptions"
+            :options="gradeOptions"
             @select="handleSearch"
           />
         </a-form-item>
         <a-form-item v-show="locationType !== LocationType.PreprimaryEducation">
           <a-select
-              v-model:value="searchParams.subjectId"
-              class="approver-settings-select-form-item"
-              :options="subjectList"
-              @select="handleSearch"
-              :fieldNames="fieldNames"
+            v-model:value="formState.subjectId"
+            class="approver-settings-select-form-item"
+            :options="subjectOptions"
+            @select="handleSearch"
           />
         </a-form-item>
         <a-form-item>
           <a-select
-              v-model:value="searchParams.approverId"
-              class="approver-settings-select-form-item"
-              :options="userListForSearch"
-              @select="handleSearch"
+            v-model:value="formState.approverId"
+            class="approver-settings-select-form-item"
+            :options="approverOptions"
+            @select="handleSearch"
           />
         </a-form-item>
       </a-form>

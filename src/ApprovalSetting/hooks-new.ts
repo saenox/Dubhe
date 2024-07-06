@@ -1,8 +1,11 @@
 import { useLocationType } from '@lexikos/doraemon-business';
+import { ref } from 'vue';
 import useForm from './use-form';
 
 const useApprovalSetting = () => {
   const locationType = useLocationType();
+
+  const loading = ref<boolean>(false);
 
   const {
     sectionOptions,

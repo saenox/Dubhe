@@ -775,6 +775,28 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     return { i: i as number, j: j as number, c: c as CellTypes };
   }
 
+  function toggleSplitter(evt: Event) {
+    const container = unref(containerRef);
+
+    if (!evt.target || !container) {
+      return;
+    }
+
+    const scrollLeft = container.scrollLeft as number;
+
+    if (scrollLeft > 0) {
+      if (!container.classList.contains('scrolled')) {
+        container.classList.add('scrolled');
+      }
+
+      return;
+    }
+
+    if (container.classList.contains('scrolled')) {
+      container.classList.remove('scrolled');
+    }
+  }
+
   function onClickHeader(evt: MouseEvent) {
     const { i, j } = getCoordinateFromEvent(evt);
 
@@ -835,7 +857,7 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     }
   }
 
-  function onScroll() {
+  function _onScroll(_evt: Event) {
     const act = unref(activeCell.value);
 
     if (isNilCoordinate(act)) {
@@ -869,6 +891,13 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
         20,
       );
     }
+  }
+
+  const onScrollDebounce = debounce(_onScroll, 100);
+
+  function onScroll(evt: Event) {
+    toggleSplitter(evt);
+    onScrollDebounce(evt);
   }
 
   function onKeyDown(evt: KeyboardEvent) {
@@ -1014,7 +1043,7 @@ const useBiDimensionalGrid = (props: Props, emits: Emits) => {
     onClickHeader,
     onClickBody,
     onClickOutside,
-    onScroll: debounce(onScroll, 100),
+    onScroll: onScroll,
     onKeyDown,
     onDragStart,
     onDragOver,

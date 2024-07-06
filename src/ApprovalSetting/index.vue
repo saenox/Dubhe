@@ -4,6 +4,7 @@ import { LocationType, SelectorPerson } from '@lexikos/doraemon-business';
 import { join, map } from 'lodash';
 import { onMounted, provide, ref } from 'vue';
 import BiDimensionalGrid from '../components/bi-dimensional-grid/index.vue';
+import ApprovalFilter from './components/ApprovalFilter/index.vue';
 import ApprovalMethod from './components/ApprovalMethod/index.vue';
 import GlobalApprover from './components/GlobalApprover/index.vue';
 import useApprovalSetting from './hooks';
@@ -21,11 +22,11 @@ provide<Context>(ContextKey, ctx);
       <GlobalApprover />
     </template>
     <template #sticky-header>
-      <div style="padding-top: 10px">
-        <span style="font-size: 14px; font-weight: bold">
-          {{ LocationType.PreprimaryEducation !== ctx.locationType ? '学科' : '年级' }}审核人设置
-        </span>
-
+      <div style="padding-top: 10px;font-weight: bold">
+        {{ LocationType.PreprimaryEducation !== ctx.locationType ? '学科' : '年级' }}审核人设置
+      </div>
+      <div>
+        <ApprovalFilter />
       </div>
     </template>
     <template #cell="{ cell }">

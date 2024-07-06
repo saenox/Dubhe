@@ -1,15 +1,7 @@
 import { useLocationType } from '@lexikos/doraemon-business';
 import { Http } from '@lexikos/doraemon-network';
-import { message } from 'ant-design-vue';
 import { ref } from 'vue';
-import type {
-  IApprovalConfig,
-  IApprovalMethodSettings,
-  IApproverConfigItem,
-  ISubject,
-  ITableParams,
-  IUser,
-} from './constants';
+import type { IApproverConfigItem, ISubject, ITableParams, IUser } from './constants';
 
 interface FormState {
   id: string | undefined;
@@ -25,12 +17,6 @@ const useApprovalSetting = () => {
   const loading = ref<boolean>(false);
 
   const modalOpen = ref<boolean>(false);
-
-  const approvalConfig = ref<IApprovalConfig>({ configKey: '', configValue: '', id: '' });
-
-  const approvalMethodSettings = ref<IApprovalMethodSettings>();
-
-  const approvalMethod = ref<string>('1');
 
   const searchGradeOptions = ref([{ label: '所有年级', value: '' }]);
 
@@ -215,7 +201,6 @@ const useApprovalSetting = () => {
   return {
     modalOpen,
     locationType,
-    approvalMethod,
     searchGradeOptions,
     searchParams,
     sectionTypes,
@@ -232,7 +217,6 @@ const useApprovalSetting = () => {
     fetchApproverConfigList,
     cleanFormData,
     handleSearchSectionChanged,
-    handleFormSectionChanged,
     handleSearch,
     handleBatchAdd,
   };

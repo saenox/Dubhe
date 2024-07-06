@@ -203,6 +203,7 @@ $head-bg: #fff;
 $head-cell-bg: #fafafa;
 $body-cell-bg: #fff;
 $active-cell-color: #1677ff;
+$sticky-split-color: rgba(5, 5, 5, 0.06);
 $footer-height: 60px;
 $overlay-bg: #fff;
 $overlay-max-width: 320px;
@@ -317,8 +318,16 @@ $overlay-max-height: 280px;
   z-index: 2;
 }
 
+.bi-dimensional-grid__container.scrolled .bi-dimensional-grid__cell--sticky:has(+.bi-dimensional-grid__header-cell:not(.bi-dimensional-grid__cell--sticky)),
+.bi-dimensional-grid__container.scrolled .bi-dimensional-grid__cell--sticky:has(+.bi-dimensional-grid__body-cell:not(.bi-dimensional-grid__cell--sticky)) {
+  box-shadow: inset -10px 0 8px -8px $sticky-split-color;
+}
+
 .bi-dimensional-grid__body-cell {
   @include cell-ify($body-cell-bg);
+}
+
+.bi-dimensional-grid__body-cell:not(.bi-dimensional-grid__cell--sticky) {
   position: relative;
 }
 
